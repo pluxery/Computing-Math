@@ -2,6 +2,8 @@ import numpy as np
 import math as m
 from sympy import *
 
+from MathFun import MathFun as mf
+
 
 class Newton:
     def __init__(self, xPoints, function):
@@ -18,24 +20,18 @@ class Newton:
                     polynom *= (value - self.__xPoints[i])
             return polynom
 
-        def derivative(function, pow):
-            derivativeFun = function
-            for _ in range(pow):
-                derivativeFun = diff(derivativeFun, Symbol('x'))
-            return derivativeFun
-
-        derivativeOfFunction = derivative(self.__function, self.__size + 1)
+        derivativeOfFunction = mf.derivative(self.__function, self.__size + 1)
         remainder = (derivativeOfFunction / m.factorial(self.__size + 1)) * getPolynom(value)
         return remainder.subs(Symbol('x'), value)
 
     @staticmethod
-    def dividedDifference(xPoints, yPoints):
+    def centralDifference(xPoints, yPoints):
         if len(xPoints) > 2:
             xLeft = xPoints[:len(xPoints) - 1]
             xRight = xPoints[1:]
             yLeft = yPoints[:len(xPoints) - 1]
             yRight = yPoints[1:]
-            return Newton.dividedDifference(xRight, yRight) - Newton.dividedDifference(xLeft, yLeft)
+            return Newton.centralDifference(xRight, yRight) - Newton.centralDifference(xLeft, yLeft)
         if len(xPoints) == 2:
             return expand((yPoints[1] - yPoints[0]) / (xPoints[1] - xPoints[0]))
         raise IndexError(f'You are stupid? check index, dude... :-> {len(xPoints)}')
@@ -97,7 +93,7 @@ class Newton:
                     polynom *= (value + i)
                 return polynom
 
-            def createDividedDiffTable():
+            def createCentralDifferenceTable():
                 table = [[0 for _ in range(self.__size)] for _ in range(self.__size)]
                 for i in range(1, self.__size):
                     for j in range(self.__size - i):
@@ -106,7 +102,7 @@ class Newton:
                     t[0] = y
                 return table
 
-            yTable = createDividedDiffTable()
+            yTable = createCentralDifferenceTable()
             half = self.__size // 2
             interpolatedValue = (yTable[half - 1][0] + yTable[half][0]) / 2
             j = half - 1 if self.__size % 2 else half
@@ -133,3 +129,4 @@ class Newton:
         elif minDistance == distanceToEnd:
             interpolatedValue = secondNewtonsFormula(xValue)
         return expand(interpolatedValue)
+

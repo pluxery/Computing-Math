@@ -1,5 +1,6 @@
 from sympy import *
 import numpy as np
+from MathFun import MathFun as mf
 
 
 class Lagrange:
@@ -10,22 +11,21 @@ class Lagrange:
         self.__yPoints = [self.__function.subs(Symbol('x'), x) for x in self.__xPoints]
 
     @property
-    def polynomLagrange(self):
-        def P(x):
+    def formulaLagrange(self):
+        x = Symbol('x')
+        step = self.__xPoints[1] - self.__xPoints[0]
+        result = 0
+        for i in range(self.__size):
             polynom = 1
-            for i in range(self.__size):
-                for j in range(self.__size):
-                    if i != j:
-                        polynom *= (x - self.__xPoints[j]) / (self.__xPoints[i] - self.__xPoints[j])
-            return polynom
-        return sum([y * P(x) for x, y in zip(self.__xPoints, self.__yPoints)])
+            for j in range(self.__size):
+                if i != j:
+                    polynom *= (x - self.__xPoints[j]) / ((i - j) * step)
+            result += self.__yPoints[i] * polynom
+        return result
 
     @property
-    def __diffFun(self):
-        diffFun = self.__function
-        for _ in range(self.__size + 1):
-            diffFun = diff(diffFun, Symbol('x'))
-        return diffFun
+    def polynomLagrange(self):
+        return sum([self.formulaLagrange.subs(Symbol('x'), x) for x in self.__xPoints])
 
     @property
     def absoluteError(self):
@@ -37,7 +37,8 @@ class Lagrange:
 
     @property
     def remainder(self):
-        maxValue = max([self.__diffFun.subs(Symbol('x'), x) for x in self.__xPoints])
+        diffFun = mf.derivative(self.__function, self.__size + 1)
+        maxValue = max([abs(diffFun.subs(Symbol('x'), x)) for x in self.__xPoints])
         distance = self.__xPoints[-1] - self.__xPoints[0]
         return maxValue / np.math.factorial(self.__size + 1) * distance ** (self.__size + 1)
 
