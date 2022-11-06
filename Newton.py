@@ -34,7 +34,7 @@ class Newton:
             return Newton.centralDifference(xRight, yRight) - Newton.centralDifference(xLeft, yLeft)
         if len(xPoints) == 2:
             return expand((yPoints[1] - yPoints[0]) / (xPoints[1] - xPoints[0]))
-        raise IndexError(f'You are stupid? check index, dude... :-> {len(xPoints)}')
+        raise IndexError(f'check index, dude... :-> {len(xPoints)}')
 
     @property
     def maxRemainder(self):

@@ -1,5 +1,3 @@
-import numpy as np
-import math as m
 from sympy import *
 
 
@@ -12,3 +10,7 @@ class MathFun:
         for _ in range(countOfDiff):
             derivativeFun = diff(derivativeFun, cls.__x)
         return derivativeFun
+
+
+
+
