@@ -6,48 +6,48 @@ from MathFun import MathFun as mf
 
 
 class Newton:
-    def __init__(self, xPoints, function):
-        self.__xPoints = xPoints
-        self.__yPoints = [function.subs(Symbol('x'), x) for x in xPoints]
-        self.__size = len(xPoints)
-        self.__function = function
+    def __init__(self, x, f):
+        self.__x = x
+        self.__y = [f.subs(Symbol('x'), x) for x in x]
+        self.__size = len(x)
+        self.__f = f
 
     def computeRemainder(self, value):
         def getPolynom(value):
             polynom = 1
             for i in range(self.__size):
-                if value != self.__xPoints[i]:
-                    polynom *= (value - self.__xPoints[i])
+                if value != self.__x[i]:
+                    polynom *= (value - self.__x[i])
             return polynom
 
-        derivativeOfFunction = mf.derivative(self.__function, self.__size + 1)
-        remainder = (derivativeOfFunction / m.factorial(self.__size + 1)) * getPolynom(value)
+        diffFun = mf.derivative(self.__f, self.__size + 1)
+        remainder = (diffFun / m.factorial(self.__size + 1)) * getPolynom(value)
         return remainder.subs(Symbol('x'), value)
 
     @staticmethod
-    def centralDifference(xPoints, yPoints):
-        if len(xPoints) > 2:
-            xLeft = xPoints[:len(xPoints) - 1]
-            xRight = xPoints[1:]
-            yLeft = yPoints[:len(xPoints) - 1]
-            yRight = yPoints[1:]
-            return Newton.centralDifference(xRight, yRight) - Newton.centralDifference(xLeft, yLeft)
-        if len(xPoints) == 2:
-            return expand((yPoints[1] - yPoints[0]) / (xPoints[1] - xPoints[0]))
-        raise IndexError(f'check index, dude... :-> {len(xPoints)}')
+    def dividedDifference(x, y):
+        if len(x) > 2:
+            xLeft = x[:len(x) - 1]
+            xRight = x[1:]
+            yLeft = y[:len(x) - 1]
+            yRight = y[1:]
+            return Newton.dividedDifference(xRight, yRight) - Newton.dividedDifference(xLeft, yLeft)
+        if len(x) == 2:
+            return expand((y[1] - y[0]) / (x[1] - x[0]))
+        raise IndexError(f'check index, dude... :-> {len(x)}')
 
     @property
     def maxRemainder(self):
-        return max([self.computeRemainder(x) for x in self.__xPoints])
+        return max([self.computeRemainder(x) for x in self.__x])
 
     @property
     def minRemainder(self):
-        return min([self.computeRemainder(x) for x in self.__xPoints])
+        return min([self.computeRemainder(x) for x in self.__x])
 
-    def __computeCentralDiffByY(self, position, pow):
-        if pow == 1:
-            return self.__xPoints[position + 1] - self.__xPoints[position]
-        return self.__computeCentralDiffByY(position + 1, pow - 1) - self.__computeCentralDiffByY(position, pow - 1)
+    def __divDiffByY(self, idx, n):
+        if n == 1:
+            return self.__x[idx + 1] - self.__x[idx]
+        return self.__divDiffByY(idx + 1, n - 1) - self.__divDiffByY(idx, n - 1)
 
     def interpolate(self, xValue):
 
@@ -55,32 +55,32 @@ class Newton:
             def getPolynom(value, size):
                 polynom = 1
                 for j in range(size):
-                    polynom *= (value - self.__xPoints[j])
+                    polynom *= (value - self.__x[j])
                 return polynom
 
-            interpolatedValue = self.__yPoints[0]
-            step = self.__xPoints[1] - self.__xPoints[0]
+            result = self.__y[0]
+            step = self.__x[1] - self.__x[0]
             for i in range(1, self.__size):
-                interpolatedValue += self.__computeCentralDiffByY(0, i) / m.factorial(i) * step ** i * getPolynom(value,
-                                                                                                                  i)
-            return interpolatedValue
+                result += self.__divDiffByY(0, i) / m.factorial(i) * step ** i * getPolynom(value,
+                                                                                                       i)
+            return result
 
         def secondNewtonsFormula(value):
             def getPolynom(value, j, size):
                 polynom = 1
                 for j in range(size):
-                    polynom *= (value - self.__xPoints[j])
+                    polynom *= (value - self.__x[j])
                     j -= 1
                 return polynom
 
-            interpolatedValue = self.__yPoints[-1]
-            step = self.__xPoints[1] - self.__xPoints[0]
+            result = self.__y[-1]
+            step = self.__x[1] - self.__x[0]
             n = self.__size - 1
             for i in range(1, self.__size):
-                interpolatedValue += self.__computeCentralDiffByY(n - 1, i) / m.factorial(i) * step ** i * getPolynom(
+                result += self.__divDiffByY(n - 1, i) / m.factorial(i) * step ** i * getPolynom(
                     value, n, i)
                 n -= 1
-            return interpolatedValue
+            return result
 
         def fuckingBessel(value):
             def getPolynom(value, size):
@@ -93,38 +93,38 @@ class Newton:
                     polynom *= (value + i)
                 return polynom
 
-            def createCentralDifferenceTable():
+            def createDivDiffTable():
                 table = [[0 for _ in range(self.__size)] for _ in range(self.__size)]
                 for i in range(1, self.__size):
                     for j in range(self.__size - i):
                         table[i][j] = table[j + 1][i - 1] - table[j][i - 1]
-                for t, y in zip(table, self.__yPoints):
+                for t, y in zip(table, self.__y):
                     t[0] = y
                 return table
 
-            yTable = createCentralDifferenceTable()
+            yTable = createDivDiffTable()
             half = self.__size // 2
-            interpolatedValue = (yTable[half - 1][0] + yTable[half][0]) / 2
+            result = (yTable[half - 1][0] + yTable[half][0]) / 2
             j = half - 1 if self.__size % 2 else half
-            xPoint = (value - self.__xPoints[j]) / (self.__xPoints[1] - self.__xPoints[0])
+            xVal = (value - self.__x[j]) / (self.__x[1] - self.__x[0])
             for i in range(1, self.__size):
                 if i % 2:
-                    interpolatedValue += (xPoint - (1 / 2) * getPolynom(xPoint, i - 1) * yTable[j][i]) / m.factorial(i)
+                    result += (xVal - (1 / 2) * getPolynom(xVal, i - 1) * yTable[j][i]) / m.factorial(i)
                 else:
-                    interpolatedValue += (
-                            getPolynom(xPoint, i) * (yTable[j][i] + yTable[j - 1][i]) / (m.factorial(i) * 2))
+                    result += (
+                            getPolynom(xVal, i) * (yTable[j][i] + yTable[j - 1][i]) / (m.factorial(i) * 2))
                     j -= 1
-            return interpolatedValue
+            return result
 
-        distanceToBegin = xValue - self.__xPoints[0]
-        distanceToMiddle = abs(xValue - self.__xPoints[self.__size // 2])
-        distanceToEnd = self.__xPoints[-1] - xValue
-        minDistance = min([distanceToBegin, distanceToMiddle, distanceToEnd])
+        distanceToBegin = xValue - self.__x[0]
+        distanceToMid = abs(xValue - self.__x[self.__size // 2])
+        distanceToEnd = self.__x[-1] - xValue
+        minDistance = min([distanceToBegin, distanceToMid, distanceToEnd])
 
         interpolatedValue = 0
         if minDistance == distanceToBegin:
             interpolatedValue = firstNewtonsFormula(xValue)
-        elif minDistance == distanceToMiddle:
+        elif minDistance == distanceToMid:
             interpolatedValue = fuckingBessel(xValue)
         elif minDistance == distanceToEnd:
             interpolatedValue = secondNewtonsFormula(xValue)
